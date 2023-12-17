@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Placówka SCP</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212; /* Kolor tła ciemny szary */
+      color: #ffffff; /* Kolor tekstu biały */
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .countdown-container {
+      text-align: center;
+    }
+
+    #countdown {
+      font-size: 2em;
+      margin-top: 20px;
+      color: #00ff00; /* Kolor tekstu licznika, na przykład jasnozielony */
+    }
+
+    .video-caption {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .video-caption p {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #ff9900; /* Kolor tekstu napisu nad filmem, na przykład pomarańczowy */
+    }
+
+    .subscribers-count {
+      font-size: 1.2em;
+      margin-top: 20px;
+    }
+
+    iframe {
+      width: 80%;
+      height: 80vh;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Licznik czasu -->
+  <div class="countdown-container">
+    <h1>Licznik do nowego odcinka Marka</h1>
+    <div id="countdown"></div>
+  </div>
+
+  <!-- Napis nad filmem -->
+  <div class="video-caption">
+    <p>1 odcinek Z Nowej Seri na kanale z moda NTM Extended na wersje 1.12.2 mam nadzieje że się podoba</p>
+  </div>
+
+  <!-- Film z YouTube -->
+  <iframe width="1189" height="669" src="https://www.youtube.com/embed/gYIbjFriJm0" title="1 odcinek Z Nowej Seri na kanale z moda NTM Extended na wersje 1.12.2 mam nadzieje że się podoba" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+  <!-- Licznik subskrypcji -->
+  <div id="subscribers-count" class="subscribers-count">Liczba subskrybentów: <span id="count">17</span></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="script.js"></script>
+  <script>
+    // Sprawdzenie, czy data jest już zapisana w localStorage
+    let countdownDate = localStorage.getItem("countdownDate");
+
+    // Jeśli nie, ustaw nową datę (5 miesięcy później)
+    if (!countdownDate) {
+      const currentDate = new Date();
+      currentDate.setMonth(currentDate.getMonth() + 5);
+      countdownDate = currentDate.getTime();
+      localStorage.setItem("countdownDate", countdownDate);
+    }
+
+    // Aktualizacja odliczania co sekundę
+    const countdownElement = document.getElementById("countdown");
+
+    setInterval(() => {
+      const now = new Date().getTime();
+      const distance = countdownDate - now;
+
+      const months = Math.floor(distance / (1000 * 60 * 60 * 24 * 30));
+      const days = Math.floor((distance % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      countdownElement.innerHTML = months + "m " + days + "d " + hours + "h " + minutes + "m " + seconds + "s";
+
+      if (distance < 0) {
+        countdownElement.innerHTML = "Czas minął!";
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
