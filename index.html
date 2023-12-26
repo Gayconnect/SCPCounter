@@ -5,49 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Placówka SCP</title>
   <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
     body {
       font-family: Arial, sans-serif;
-      background-color: #121212; /* Kolor tła ciemny szary */
-      color: #ffffff; /* Kolor tekstu biały */
-      margin: 0;
+      background-color: #121212;
+      color: #ffffff;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
     }
 
-    .countdown-container {
+    .countdown-container,
+    .video-caption,
+    .subscribers-count {
       text-align: center;
+      margin-top: 20px;
     }
 
     #countdown {
       font-size: 2em;
-      margin-top: 20px;
-      color: #00ff00; /* Kolor tekstu licznika, na przykład jasnozielony */
-    }
-
-    .video-caption {
-      text-align: center;
-      margin-top: 20px;
+      color: #00ff00;
     }
 
     .video-caption p {
       font-size: 1.2em;
       font-weight: bold;
-      color: #ff9900; /* Kolor tekstu napisu nad filmem, na przykład pomarańczowy */
+      color: #ff9900;
     }
 
     .subscribers-count {
       font-size: 1.2em;
-      margin-top: 20px;
     }
 
-    .snake-game {
-      width: 300px;
-      height: 300px;
-      border: 1px solid #fff;
-      margin-top: 20px;
+    iframe {
+      width: 80%;
+      height: 80vh;
+      border: none;
+    }
+
+    canvas {
+      border: 1px solid white;
     }
   </style>
 </head>
@@ -67,119 +69,145 @@
   <iframe width="1189" height="669" src="https://www.youtube.com/embed/gYIbjFriJm0" title="1 odcinek Z Nowej Seri na kanale z moda NTM Extended na wersje 1.12.2 mam nadzieje że się podoba" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
   <!-- Licznik subskrypcji -->
-  <div id="subscribers-count" class="subscribers-count">Liczba subskrybentów: <span id="count">17</span></div>
+  <div id="subscribers-count" class="subscribers-count">Liczba subskrybentów: <span id="count">18</span></div>
 
   <!-- Snake Game -->
-  <div id="snake-game" class="snake-game"></div>
+  <canvas width="400" height="400" id="game"></canvas>
+
+  <script>
+    var canvas = document.getElementById('game');
+    var context = canvas.getContext('2d');
+
+    var grid = 16;
+    var count = 0;
+
+    var snake = {
+      x: 160,
+      y: 160,
+      dx: grid,
+      dy: 0,
+      cells: [],
+      maxCells: 4
+    };
+
+    var apple = {
+      x: 320,
+      y: 320
+    };
+
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min)) + min;
+    }
+
+    function loop() {
+      requestAnimationFrame(loop);
+
+      if (++count < 6) { // Zwiększyłem czas na jedno przesunięcie węża
+        return;
+      }
+
+      count = 0;
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      snake.x += snake.dx;
+      snake.y += snake.dy;
+
+      if (snake.x < 0) {
+        snake.x = canvas.width - grid;
+      } else if (snake.x >= canvas.width) {
+        snake.x = 0;
+      }
+
+      if (snake.y < 0) {
+        snake.y = canvas.height - grid;
+      } else if (snake.y >= canvas.height) {
+        snake.y = 0;
+      }
+
+      snake.cells.unshift({ x: snake.x, y: snake.y });
+
+      if (snake.cells.length > snake.maxCells) {
+        snake.cells.pop();
+      }
+
+      context.fillStyle = 'red';
+      context.fillRect(apple.x, apple.y, grid - 1, grid - 1);
+
+      context.fillStyle = 'green';
+      snake.cells.forEach(function (cell, index) {
+        context.fillRect(cell.x, cell.y, grid - 1, grid - 1);
+
+        if (cell.x === apple.x && cell.y === apple.y) {
+          snake.maxCells++;
+          apple.x = getRandomInt(0, 25) * grid;
+          apple.y = getRandomInt(0, 25) * grid;
+        }
+
+        for (var i = index + 1; i < snake.cells.length; i++) {
+          if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+            snake.x = 160;
+            snake.y = 160;
+            snake.cells = [];
+            snake.maxCells = 4;
+            snake.dx = grid;
+            snake.dy = 0;
+
+            apple.x = getRandomInt(0, 25) * grid;
+            apple.y = getRandomInt(0, 25) * grid;
+          }
+        }
+      });
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.which === 37 && snake.dx === 0) {
+        snake.dx = -grid;
+        snake.dy = 0;
+      } else if (e.which === 38 && snake.dy === 0) {
+        snake.dy = -grid;
+        snake.dx = 0;
+      } else if (e.which === 39 && snake.dx === 0) {
+        snake.dx = grid;
+        snake.dy = 0;
+      } else if (e.which === 40 && snake.dy === 0) {
+        snake.dy = grid;
+        snake.dx = 0;
+      }
+    });
+
+    requestAnimationFrame(loop);
+  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="script.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      // Ustaw klucz API (zastąp 'YOUR_API_KEY' własnym kluczem)
-      const apiKey = 'AIzaSyDTaR-HhUd-lJmt_IrOkZkR-DfD2CPDP5E';
+    let countdownDate = localStorage.getItem("countdownDate");
 
-      // Ustaw identyfikator kanału (zastąp 'CHANNEL_ID' własnym ID kanału)
-      const channelId = 'CHANNEL_ID';
+    if (!countdownDate) {
+      const currentDate = new Date();
+      currentDate.setMonth(currentDate.getMonth() + 5);
+      countdownDate = currentDate.getTime();
+      localStorage.setItem("countdownDate", countdownDate);
+    }
 
-      // Funkcja pobierająca liczbę subskrypcji z YouTube API
-      function fetchSubscribersCount() {
-        const apiUrl = `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${channelId}&key=${apiKey}`;
-        
-        axios.get(apiUrl)
-          .then(response => {
-            const subscriberCount = response.data.items[0].statistics.subscriberCount;
-            updateSubscribersCount(subscriberCount);
-          })
-          .catch(error => {
-            console.error('Błąd podczas pobierania danych:', error);
-          });
+    const countdownElement = document.getElementById("countdown");
+
+    setInterval(() => {
+      const now = new Date().getTime();
+      const distance = countdownDate - now;
+
+      const months = Math.floor(distance / (1000 * 60 * 60 * 24 * 30));
+      const days = Math.floor((distance % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      countdownElement.innerHTML = months + "m " + days + "d " + hours + "h " + minutes + "m " + seconds + "s";
+
+      if (distance < 0) {
+        countdownElement.innerHTML = "Czas minął!";
       }
-
-      // Funkcja aktualizująca licznik subskrypcji na stronie
-      function updateSubscribersCount(count) {
-        const subscribersElement = document.getElementById('subscribers-count');
-        if (subscribersElement) {
-          subscribersElement.textContent = `Liczba subskrybentów: ${count}`;
-        }
-      }
-
-      // Początkowe pobranie i ustawienie liczby subskrypcji
-      fetchSubscribersCount();
-
-      // Aktualizacja co 60 sekund (60000 milisekund)
-      setInterval(fetchSubscribersCount, 60000);
-
-      // Snake Game
-      const snakeGameContainer = document.getElementById('snake-game');
-      const canvas = document.createElement('canvas');
-      canvas.width = 300;
-      canvas.height = 300;
-      canvas.style.border = '1px solid #fff';
-      snakeGameContainer.appendChild(canvas);
-
-      const ctx = canvas.getContext('2d');
-
-      const snakeSize = 10;
-      const gridSize = 30;
-      let snake = [{ x: 10, y: 10 }];
-      let dx = 1;
-      let dy = 0;
-
-      function drawSnake() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        snake.forEach(segment => {
-          ctx.fillStyle = '#00ff00';
-          ctx.fillRect(segment.x * gridSize, segment.y * gridSize, snakeSize, snakeSize);
-        });
-      }
-
-      function updateSnake() {
-        const head = { x: snake[0].x + dx, y: snake[0].y + dy };
-        snake.unshift(head);
-
-        if (head.x < 0 || head.x >= gridSize || head.y < 0 || head.y >= gridSize) {
-          // Snake hit the wall, reset the game
-          snake = [{ x: 10, y: 10 }];
-        }
-
-        // Remove the tail if the snake is too long
-        if (snake.length > 1) {
-          snake.pop();
-        }
-      }
-
-      function gameLoop() {
-        updateSnake();
-        drawSnake();
-        requestAnimationFrame(gameLoop);
-      }
-
-      // Start the game loop
-      gameLoop();
-
-      // Handle keyboard input
-      document.addEventListener('keydown', function (event) {
-        switch (event.key) {
-          case 'ArrowUp':
-            dx = 0;
-            dy = -1;
-            break;
-          case 'ArrowDown':
-            dx = 0;
-            dy = 1;
-            break;
-          case 'ArrowLeft':
-            dx = -1;
-            dy = 0;
-            break;
-          case 'ArrowRight':
-            dx = 1;
-            dy = 0;
-            break;
-        }
-      });
-    });
+    }, 1000);
   </script>
 </body>
 </html>
