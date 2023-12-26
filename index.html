@@ -43,10 +43,11 @@
       margin-top: 20px;
     }
 
-    iframe {
-      width: 80%;
-      height: 80vh;
-      border: none;
+    .snake-game {
+      width: 300px;
+      height: 300px;
+      border: 1px solid #fff;
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -68,39 +69,113 @@
   <!-- Licznik subskrypcji -->
   <div id="subscribers-count" class="subscribers-count">Liczba subskrybentów: <span id="count">17</span></div>
 
+  <!-- Snake Game -->
+  <div id="snake-game" class="snake-game"></div>
+
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="script.js"></script>
   <script>
-    // Sprawdzenie, czy data jest już zapisana w localStorage
-    let countdownDate = localStorage.getItem("countdownDate");
+    document.addEventListener('DOMContentLoaded', function () {
+      // Ustaw klucz API (zastąp 'YOUR_API_KEY' własnym kluczem)
+      const apiKey = 'AIzaSyDTaR-HhUd-lJmt_IrOkZkR-DfD2CPDP5E';
 
-    // Jeśli nie, ustaw nową datę (5 miesięcy później)
-    if (!countdownDate) {
-      const currentDate = new Date();
-      currentDate.setMonth(currentDate.getMonth() + 5);
-      countdownDate = currentDate.getTime();
-      localStorage.setItem("countdownDate", countdownDate);
-    }
+      // Ustaw identyfikator kanału (zastąp 'CHANNEL_ID' własnym ID kanału)
+      const channelId = 'CHANNEL_ID';
 
-    // Aktualizacja odliczania co sekundę
-    const countdownElement = document.getElementById("countdown");
-
-    setInterval(() => {
-      const now = new Date().getTime();
-      const distance = countdownDate - now;
-
-      const months = Math.floor(distance / (1000 * 60 * 60 * 24 * 30));
-      const days = Math.floor((distance % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-      countdownElement.innerHTML = months + "m " + days + "d " + hours + "h " + minutes + "m " + seconds + "s";
-
-      if (distance < 0) {
-        countdownElement.innerHTML = "Czas minął!";
+      // Funkcja pobierająca liczbę subskrypcji z YouTube API
+      function fetchSubscribersCount() {
+        const apiUrl = `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${channelId}&key=${apiKey}`;
+        
+        axios.get(apiUrl)
+          .then(response => {
+            const subscriberCount = response.data.items[0].statistics.subscriberCount;
+            updateSubscribersCount(subscriberCount);
+          })
+          .catch(error => {
+            console.error('Błąd podczas pobierania danych:', error);
+          });
       }
-    }, 1000);
+
+      // Funkcja aktualizująca licznik subskrypcji na stronie
+      function updateSubscribersCount(count) {
+        const subscribersElement = document.getElementById('subscribers-count');
+        if (subscribersElement) {
+          subscribersElement.textContent = `Liczba subskrybentów: ${count}`;
+        }
+      }
+
+      // Początkowe pobranie i ustawienie liczby subskrypcji
+      fetchSubscribersCount();
+
+      // Aktualizacja co 60 sekund (60000 milisekund)
+      setInterval(fetchSubscribersCount, 60000);
+
+      // Snake Game
+      const snakeGameContainer = document.getElementById('snake-game');
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 300;
+      canvas.height = 300;
+      canvas.style.border = '1px solid #fff';
+
+      snakeGameContainer.appendChild(canvas);
+
+      const ctx = canvas.getContext('2d');
+
+      // Initial snake position
+      let snake = [{ x: 10, y: 10 }];
+
+      // Initial direction
+      let dx = 1;
+      let dy = 0;
+
+      // Game loop
+      function gameLoop() {
+        // Update
+        const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+        snake.unshift(head);
+
+        // Draw
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        snake.forEach(segment => {
+          ctx.fillStyle = '#00ff00';
+          ctx.fillRect(segment.x * 10, segment.y * 10, 10, 10);
+        });
+
+        // Remove the tail if the snake is too long
+        if (snake.length > 1) {
+          snake.pop();
+        }
+
+        // Repeat the game loop
+        requestAnimationFrame(gameLoop);
+      }
+
+      // Start the game loop
+      gameLoop();
+
+      // Handle keyboard input
+      document.addEventListener('keydown', function (event) {
+        switch (event.key) {
+          case 'ArrowUp':
+            dx = 0;
+            dy = -1;
+            break;
+          case 'ArrowDown':
+            dx = 0;
+            dy = 1;
+            break;
+          case 'ArrowLeft':
+            dx = -1;
+            dy = 0;
+            break;
+          case 'ArrowRight':
+            dx = 1;
+            dy = 0;
+            break;
+        }
+      });
+    });
   </script>
 </body>
 </html>
